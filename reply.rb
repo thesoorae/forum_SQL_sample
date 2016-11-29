@@ -1,3 +1,4 @@
+require_relative 'question.rb'
 class Reply
   attr_accessor :body, :user_id, :parent_reply_id, :question_id
 
@@ -5,6 +6,29 @@ class Reply
     data = QuestionsDB.instance.execute("SELECT * FROM replies")
     data.map { |datum| Reply.new(datum) }
   end
+
+  def self.find_by_user_id(user_id)
+    QuestionsDB.instance.execute(<<-SQL, user_id)
+    SELECT
+      *
+    FROM
+      replies
+    WHERE
+      user_id = ?
+    SQL
+  end
+
+  def self.find_by_question_id(question_id)
+    QuestionsDB.instance.execute(<<-SQL, question_id)
+    SELECT
+      body, user_id
+    FROM
+      replies
+    WHERE
+      question_id = ?
+    SQL
+  end
+
 
   def initialize(options)
     @id = options['id']
