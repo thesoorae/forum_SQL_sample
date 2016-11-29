@@ -1,4 +1,3 @@
-require_relative 'questions.rb'
 
 class Like
   attr_accessor :user_id, :question_id
@@ -6,6 +5,61 @@ class Like
   def self.all
     data = QuestionsDB.instance.execute("SELECT * FROM question_likes")
     data.map { |datum| Like.new(datum) }
+  end
+
+  def self.likers_for_question_id(question_id)
+    QuestionsDB.instance.execute(<<-SQL, question_id)
+    SELECT
+      *
+    FROM
+      users
+    JOIN
+      question_likes ON question_likes.user_id = users.id
+    WHERE
+      question_likes.question_id = ?
+    SQL
+  end
+
+  def self.num_likes_for_question_id(question_id)
+    QuestionsDB.instance.execute(<<-SQL, question_id)
+    SELECT
+      COUNT(users)
+    FROM
+      users
+    JOIN
+      question_likes ON question_likes.user_id = users.id
+    WHERE
+      question_likes.question_id = ?
+    SQL
+  end
+
+  def self.liked_questions_for_user_id(user_id)
+    QuestionsDB.instance.execute(<<-SQL, user_id)
+    SELECT
+      *
+    FROM
+      questions
+    JOIN
+      question_likes ON question_likes.question_id = questions.id
+    WHERE
+      question_likes.user_id = ?
+    SQL
+  end
+
+  def self.most_liked_questions(n)
+    QuestionsDB.instance.execute(<<-SQL, n)
+    SELECT
+      *, COUNT(questions)
+    FROM
+      questions
+    JOIN
+      question_likes ON question_likes.question_id = questions.id
+    GROUP BY
+      questions.id
+    ORDER BY
+      COUNT(question_likes.user_id) DESC
+    LIMIT ?
+    SQL
   end
 
   def initialize(options)

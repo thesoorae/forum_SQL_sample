@@ -60,4 +60,57 @@ class Reply
       id = ?
     SQL
   end
+
+  def author
+   QuestionsDB.instance.execute(<<-SQL, @user_id)
+    SELECT
+      DISTINCT users.fname, users.lname
+    FROM
+      users
+    JOIN
+      replies ON replies.user_id = users.id
+    WHERE
+      users.id = ?
+    SQL
+  end
+
+  def question
+    QuestionsDB.instance.execute(<<-SQL, @question_id)
+    SELECT
+      *
+    FROM
+      questions
+    JOIN
+      replies ON questions.id = replies.question_id
+    WHERE
+      questions.id = ?
+    SQL
+  end
+
+  def parent_reply
+    QuestionsDB.instance.execute(<<-SQL, @parent_reply_id)
+    SELECT
+      parent_replies.body, parent_replies.user_id 
+    FROM
+      replies
+    JOIN
+      replies AS parent_replies ON replies.parent_reply_id = parent_replies.id
+    WHERE
+      parent_replies.id = ?
+    SQL
+  end
+
+  def child_replies
+    QuestionsDB.instance.execute(<<-SQL, @id)
+    SELECT
+      child_replies.body, child_replies.user_id
+    FROM
+      replies
+    JOIN
+      replies AS child_replies ON child_replies.parent_reply_id = replies.id
+    WHERE
+      child_replies.parent_reply_id = ?
+    SQL
+  end
+
 end
