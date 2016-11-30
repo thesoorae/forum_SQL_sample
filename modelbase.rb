@@ -20,10 +20,12 @@ class ModelBase
   end
 
   def self.where(options)
-      pairs = options.keys.map do |key|
+    if options.is_a?(Hash)
+      options = options.keys.map do |key|
         "#{key} = '#{options[key]}'"
       end
-    pairs = pairs.join(" AND ")
+      options = options.join(" AND ")
+    end
 
     QuestionsDB.instance.execute(<<-SQL)
     SELECT
@@ -31,7 +33,7 @@ class ModelBase
     FROM
     #{self::TABLE}
     WHERE
-    #{pairs}
+    #{options}
     SQL
   end
 
@@ -44,6 +46,27 @@ class ModelBase
     WHERE
       id = ?
     SQL
+  end
+
+  def self.method_missing(method_name, *args)
+    method_name = method_name.to_s
+    if method_name.start_with?('find_by_')
+      attributes_string = method_name[('find_by_'.length)..-1]
+      attributes_names = attributes_string.split('_and_')
+
+      unless attributes_names.length == args.length
+        raise 'inexpected # of args'
+      end
+
+      search_conditions = {}
+      attributes_names.each_index do |i|
+        search_conditions[attributes_names[i]] = args[i]
+      end
+
+      self.where(search_conditions)
+    else
+      super
+    end
   end
 
   def create
