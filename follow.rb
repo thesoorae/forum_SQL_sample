@@ -1,29 +1,29 @@
 require_relative 'question.rb'
+require_relative 'modelbase.rb'
 
-class Follow
+class Follow < ModelBase
   attr_accessor :user_id, :question_id
+
+  TABLE = 'question_follows'
 
   def self.most_followed_questions(n)
     QuestionsDB.instance.execute(<<-SQL, n)
   SELECT
-  *, COUNT(question_follows.user_id)
+    *, COUNT(question_follows.user_id)
   FROM
-  questions
+    questions
   JOIN
-  question_follows ON questions.id = question_follows.question_id
+    question_follows ON questions.id = question_follows.question_id
   GROUP BY
-  questions.id
+    questions.id
   ORDER BY
-  COUNT(question_follows.user_id) DESC
+    COUNT(question_follows.user_id) DESC
   LIMIT
-  ?
+    ?
   SQL
   end
 
-  def self.all
-    data = QuestionsDB.instance.execute("SELECT * FROM question_follows")
-    data.map { |datum| Follow.new(datum) }
-  end
+
 
   def self.followers_for_question_id(question_id)
     QuestionsDB.instance.execute(<<-SQL, question_id)
@@ -56,21 +56,22 @@ class Follow
     @question_id = options['question_id']
   end
 
-  def create
-    raise "question doesn\'t exist" unless @question_id
-    raise "user doesn\'t exist" unless @user_id
-
-    QuestionsDB.instance.execute(<<-SQL, @user_id, @question_id)
-    INSERT INTO
-      question_follows (user_id, question_id)
-    VALUES
-      (?, ?)
-    SQL
-  end
+  # def create
+  #   raise "question doesn\'t exist" unless @question_id
+  #   raise "user doesn\'t exist" unless @user_id
+  #
+  #   QuestionsDB.instance.execute(<<-SQL, @user_id, @question_id)
+  #   INSERT INTO
+  #     question_follows (user_id, question_id)
+  #   VALUES
+  #     (?, ?)
+  #   SQL
+  # end
 
   def delete
     raise "question doesn\'t exist" unless @question_id
     raise "user doesn\'t exist" unless @user_id
+
     QuestionsDB.instance.execute(<<-SQL, @question_id, @user_id)
     DELETE FROM
       question_follows

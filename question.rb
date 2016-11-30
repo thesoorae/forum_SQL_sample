@@ -1,5 +1,6 @@
 require 'sqlite3'
 require 'singleton'
+require_relative 'modelbase.rb'
 
 class QuestionsDB < SQLite3::Database
   include Singleton
@@ -12,9 +13,10 @@ class QuestionsDB < SQLite3::Database
 end
 
 
-
-class Question
+class Question < ModelBase
   attr_accessor :title, :body, :user_id
+
+TABLE = 'questions'
 
   def self.find_by_author_id(author_id)
     QuestionsDB.instance.execute(<<-SQL, author_id)
@@ -28,10 +30,10 @@ class Question
   end
 
 
-  def self.all
-    data = QuestionsDB.instance.execute("SELECT * FROM questions")
-    data.map { |datum| Question.new(datum) }
-  end
+  # def self.all
+  #   data = QuestionsDB.instance.execute("SELECT * FROM questions")
+  #   data.map { |datum| Question.new(datum) }
+  # end
 
   def self.most_followed(n)
     Follow.most_followed_questions(n)
@@ -48,28 +50,28 @@ class Question
     @user_id = options['user_id']
   end
 
-  def create
-    raise "#{self} already in database" if @id
-    QuestionsDB.instance.execute(<<-SQL, @title, @body, @user_id)
-    INSERT INTO
-      questions (title, body, user_id)
-    VALUES
-      (?, ?, ?)
-    SQL
-    @id  = QuestionsDB.instance.last_insert_row_id
-  end
-
-  def update
-    raise "#{self} doesn't exist" unless @id
-    QuestionsDB.instance.execute(<<-SQL, @title, @body, @user_id, @id)
-    UPDATE
-      questions
-    SET
-      title = ?, body = ?, user_id = ?
-    WHERE
-      id = ?
-    SQL
-  end
+  # def create
+  #   raise "#{self} already in database" if @id
+  #   QuestionsDB.instance.execute(<<-SQL, @title, @body, @user_id)
+  #   INSERT INTO
+  #     questions (title, body, user_id)
+  #   VALUES
+  #     (?, ?, ?)
+  #   SQL
+  #   @id  = QuestionsDB.instance.last_insert_row_id
+  # end
+  #
+  # def update
+  #   raise "#{self} doesn't exist" unless @id
+  #   QuestionsDB.instance.execute(<<-SQL, @title, @body, @user_id, @id)
+  #   UPDATE
+  #     questions
+  #   SET
+  #     title = ?, body = ?, user_id = ?
+  #   WHERE
+  #     id = ?
+  #   SQL
+  # end
 
   def author
     QuestionsDB.instance.execute(<<-SQL, @user_id)

@@ -1,11 +1,11 @@
+require_relative 'modelbase.rb'
 
-class Like
+class Like < ModelBase
   attr_accessor :user_id, :question_id
 
-  def self.all
-    data = QuestionsDB.instance.execute("SELECT * FROM question_likes")
-    data.map { |datum| Like.new(datum) }
-  end
+TABLE = 'question_likes'
+
+
 
   def self.likers_for_question_id(question_id)
     QuestionsDB.instance.execute(<<-SQL, question_id)
